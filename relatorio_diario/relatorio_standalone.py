@@ -166,7 +166,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
     linha_abandono = ""
     if pior_serv:
         perd, tot = abandono[pior_serv]
-        linha_abandono = f"⚠️ Maior abandono: *{pior_serv}* ({perd}/{tot} sem agendar)\n"
+        linha_abandono = f"  ⚠️ Abandono: *{pior_serv}* · {perd}/{tot}\n"
 
     # ── Taxa por atendente (mês) ──
     ATENDENTES = ["Amanda", "Ana", "Francine", "Lara"]
