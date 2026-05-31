@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Atendimento — Afetivamente</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f0f7; color: #333; }
+  header { background: #7b3f8c; color: white; padding: 18px 32px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 20px; font-weight: 700; }
+  header span { font-size: 13px; opacity: 0.75; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 20px 16px; }
+
+  /* Filtros */
+  .filtros { background: white; border-radius: 12px; padding: 14px 20px; margin-bottom: 20px; display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .filtros label { font-size: 11px; color: #666; font-weight: 700; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .filtros input { border: 1px solid #ddd; border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+  .btn { background: #7b3f8c; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .btn:hover { background: #6a3279; }
+  .btn-outline { background: white; color: #7b3f8c; border: 2px solid #7b3f8c; }
+  .btn-outline:hover { background: #f5f0f7; }
+  .btn-periodo { background: #f0ebf5; color: #7b3f8c; border: 1px solid #d8c8e8; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-periodo:hover, .btn-periodo.ativo { background: #7b3f8c; color: white; }
+
+  /* Abas principais */
+  .abas-nav { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e5e7eb; }
+  .aba-nav-btn { padding: 12px 28px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; background: none; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+  .aba-nav-btn.ativo { color: #7b3f8c; border-bottom-color: #7b3f8c; }
+  .aba-nav-btn:hover { color: #7b3f8c; }
+  .aba-conteudo { display: none; }
+  .aba-conteudo.ativo { display: block; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 5px solid #ddd; }
+  .card.total   { border-color: #7b3f8c; }
+  .card.lead    { border-color: #3b82f6; }
+  .card.agendou { border-color: #22c55e; }
+  .card.nao_agendou  { border-color: #f97316; }
+  .card.cancelamento { border-color: #ef4444; }
+  .card.perdido { border-color: #f59e0b; }
+  .card .valor  { font-size: 32px; font-weight: 700; color: #222; }
+  .card .label  { font-size: 12px; color: #666; margin-top: 4px; }
+  .card .sub    { font-size: 11px; color: #999; margin-top: 2px; }
+
+  /* Layout */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .secao { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 20px; }
+  .secao h2 { font-size: 14px; font-weight: 700; margin-bottom: 14px; color: #7b3f8c; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* Tabela */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; background: #f9f5fb; color: #666; font-size: 11px; font-weight: 700; border-bottom: 1px solid #eee; text-transform: uppercase; letter-spacing: .4px; }
+  td { padding: 9px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fdf8ff; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge.lead          { background: #dbeafe; color: #1d4ed8; }
+  .badge.cancelamento  { background: #fee2e2; color: #b91c1c; }
+  .badge.perdido       { background: #fef3c7; color: #92400e; }
+  .badge.resolvido     { background: #dcfce7; color: #15803d; }
+  .badge.em_atendimento { background: #f3e8ff; color: #7e22ce; }
+  .badge.agendou       { background: #dcfce7; color: #15803d; }
+  .badge.nao_agendou   { background: #ffedd5; color: #c2410c; }
+  .badge.indefinido    { background: #f3f4f6; color: #6b7280; }
+
+  /* Barras */
+  .barra-wrap { margin-top: 8px; }
+  .barra-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+  .barra-item .nome { width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barra { flex: 1; background: #f0ebf5; border-radius: 20px; height: 10px; overflow: hidden; }
+  .barra-fill { height: 100%; background: #7b3f8c; border-radius: 20px; }
+  .barra-item .qtd { width: 30px; text-align: right; font-weight: 600; color: #7b3f8c; }
+
+  /* Serviços */
+  .srv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 14px; }
+  .srv-card { background: #fafafa; border-radius: 12px; padding: 16px; border: 1px solid #eee; position: relative; }
+  .srv-destaque { background: #fdf5ff; border: 2px solid #7b3f8c; }
+  .srv-badge-top { position: absolute; top: -10px; left: 14px; background: #7b3f8c; color: white; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; }
+  .srv-nome { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 12px; margin-top: 4px; }
+  .srv-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .srv-stat { display: flex; flex-direction: column; align-items: center; min-width: 48px; }
+  .srv-num { font-size: 22px; font-weight: 700; color: #333; }
+  .srv-num.verde   { color: #16a34a; }
+  .srv-num.laranja { color: #ea580c; }
+  .srv-num.vermelho { color: #dc2626; }
+  .srv-num.cinza   { color: #6b7280; }
+  .srv-label { font-size: 10px; color: #999; text-align: center; margin-top: 2px; }
+  .srv-taxa-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .srv-taxa-label { font-size: 11px; color: #888; white-space: nowrap; }
+  .srv-taxa-barra { flex: 1; background: #e5e7eb; border-radius: 20px; height: 8px; }
+  .srv-taxa-fill { height: 100%; border-radius: 20px; }
+  .srv-taxa-fill.alta   { background: #22c55e; }
+  .srv-taxa-fill.media  { background: #f59e0b; }
+  .srv-taxa-fill.baixa  { background: #ef4444; }
+  .srv-taxa-pct { font-size: 12px; font-weight: 700; width: 34px; text-align: right; }
+  .srv-alerta { font-size: 11px; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 4px 8px; margin-top: 4px; }
+  .avn-resumo { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; background: #fdf5ff; border: 1px solid #d8b4fe; border-radius: 10px; padding: 12px 16px; margin-bottom: 4px; font-size: 13px; }
+  .verde   { color: #16a34a; }
+  .laranja { color: #ea580c; }
+  .vermelho { color: #dc2626; }
+
+  /* Pipeline */
+  .pipeline-alerta { background:#fee2e2;color:#b91c1c;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px; }
+  .pipeline-item { font-size:13px;padding:6px 0;border-bottom:1px solid #f0f0f0; }
+
+  /* Insights */
+  .insight-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .insight-secao { background: #fafafa; border-radius: 10px; padding: 14px 16px; }
+  .insight-titulo { font-size: 13px; font-weight: 700; color: #444; margin-bottom: 10px; text-transform: uppercase; letter-spacing: .4px; }
+  .insight-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 9px; font-size: 13px; line-height: 1.5; color: #444; }
+  .insight-item:last-child { margin-bottom: 0; }
+  .insight-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .insight-item strong { color: #222; }
+
+  /* Utilitários */
+  .loading { text-align: center; padding: 60px; color: #999; font-size: 15px; }
+  .erro { background: #fee2e2; color: #b91c1c; padding: 16px; border-radius: 8px; margin: 16px 0; }
+  .atualizado { font-size: 11px; color: #bbb; text-align: right; margin-bottom: 10px; }
+  .vazio { text-align: center; padding: 32px; color: #bbb; font-size: 14px; }
+  canvas { max-height: 220px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Dashboard de Atendimento</h1>
+    <span>Afetivamente Clínica — Umbler Talk</span>
+  </div>
+</header>
+
+<div class="container">
+  <div class="filtros">
+    <div>
+      <label>Data início</label>
+      <input type="date" id="inicio">
+    </div>
+    <div>
+      <label>Data fim</label>
+      <input type="date" id="fim">
+    </div>
+    <div style="display:flex;gap:6px;align-items:flex-end">
+      <button class="btn-periodo" onclick="setPeriodo(0)">Hoje</button>
+      <button class="btn-periodo" onclick="setPeriodo(7)">7 dias</button>
+      <button class="btn-periodo" onclick="setPeriodo(15)">15 dias</button>
+      <button class="btn-periodo" onclick="setPeriodo(30)">30 dias</button>
+    </div>
+    <button class="btn" onclick="carregar()">Atualizar</button>
+    <button class="btn btn-outline" onclick="forcarAtualizacao()" title="Busca novos dados da Umbler">↺ Sincronizar</button>
+    <button class="btn btn-outline" onclick="exportarCSV()">Exportar CSV</button>
+  </div>
+
+  <div id="conteudo"><div class="loading">Carregando dados...</div></div>
+</div>
+
+<script>
+let dadosGlobais = [];
+let charts = {};
+
+function hoje() { return new Date().toISOString().split('T')[0]; }
+function diasAtras(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; }
+
+function setPeriodo(dias) {
+  document.getElementById('inicio').value = dias === 0 ? hoje() : diasAtras(dias - 1);
+  document.getElementById('fim').value    = hoje();
+  document.querySelectorAll('.btn-periodo').forEach(b => b.classList.remove('ativo'));
+  event.target.classList.add('ativo');
+  carregar();
+}
+
+async function forcarAtualizacao() {
+  document.getElementById('conteudo').innerHTML = '<div class="loading">🔄 Sincronizando com a Umbler... até 30 segundos.</div>';
+  try { await fetch('http://localhost:8765/api/dashboard?forcar=1'); await carregar(); }
+  catch(e) { document.getElementById('conteudo').innerHTML = `<div class="erro">Erro: ${e.message}</div>`; }
+}
+
+async function carregar() {
+  const inicio = document.getElementById('inicio').value;
+  const fim    = document.getElementById('fim').value;
+  document.getElementById('conteudo').innerHTML = '<div class="loading">Carregando...</div>';
+  try {
+    let url = `http://localhost:8765/api/dashboard?v=1`;
+    if (inicio) url += `&inicio=${inicio}T00:00:00Z`;
+    if (fim)    url += `&fim=${fim}T23:59:59Z`;
+    const r    = await fetch(url);
+    const data = await r.json();
+    if (data.erro) throw new Error(data.erro);
+    dadosGlobais = data.conversas;
+    renderizar(data);
+  } catch(e) {
+    document.getElementById('conteudo').innerHTML = `<div class="erro">Erro ao carregar: ${e.message}<br><small>Verifique se o servidor está rodando em localhost:8765</small></div>`;
+  }
+}
+
+function renderizar(data) {
+  const novos  = dadosGlobais.filter(c => c.eh_novo);
+  const ativos = dadosGlobais.filter(c => !c.eh_novo);
+  const r = data.resumo;
+
+  // Destrói gráficos antigos
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+
+  document.getElementById('conteudo').innerHTML = `
+    <div class="atualizado">Atualizado em ${new Date().toLocaleString('pt-BR')}</div>
+
+    <div class="abas-nav">
+      <button class="aba-nav-btn ativo" onclick="trocarAba('novos',this)">🆕 Novos Contatos (${novos.length})</button>
+      <button class="aba-nav-btn" onclick="trocarAba('ativos',this)">🔄 Contatos Ativos (${ativos.length})</button>
+      <button class="aba-nav-btn" onclick="trocarAba('geral',this)">📊 Visão Geral</button>
+    </div>
+
+    <div id="aba-novos" class="aba-conteudo ativo">${renderNovos(r, novos)}</div>
+    <div id="aba-ativos" class="aba-conteudo">${renderAtivos(r, ativos)}</div>
+    <div id="aba-geral" class="aba-conteudo">${renderGeral(r)}</div>
+  `;
+
+  desenharGraficos(r, novos, ativos);
+}
+
+function trocarAba(id, btn) {
+  document.querySelectorAll('.aba-conteudo').forEach(a => a.classList.remove('ativo'));
+  document.querySelectorAll('.aba-nav-btn').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('aba-' + id).classList.add('ativo');
+  btn.classList.add('ativo');
+}
+
+// ── ABA NOVOS ─────────────────────────────────────────────────────────────────
+function renderNovos(r, novos) {
+  const total = novos.length;
+  const ag    = novos.filter(c => c.agendamento === 'agendou').length;
+  const naoAg = novos.filter(c => c.agendamento === 'nao_agendou').length;
+  const cancel = novos.filter(c => c.status === 'cancelamento').length;
+  const taxa   = pct(ag, total);
+
+  const porServico = contarServicos(novos);
+  const porAtend   = contarAtendentes(novos);
+  const porDia     = contarPorDia(novos);
+
+  return `
+    <div class="cards">
+      <div class="card total"><div class="valor">${total}</div><div class="label">Novos contatos</div><div class="sub">Chegaram no período</div></div>
+      <div class="card agendou"><div class="valor">${ag}</div><div class="label">Agendamentos fechados</div><div class="sub">Taxa: ${taxa}%</div></div>
+      <div class="card nao_agendou"><div class="valor">${naoAg}</div><div class="label">Não convertidos</div><div class="sub">${pct(naoAg,total)}% do total</div></div>
+      <div class="card cancelamento"><div class="valor">${cancel}</div><div class="label">Cancelamentos</div><div class="sub">${pct(cancel,total)}%</div></div>
+      <div class="card" style="border-color:#a855f7"><div class="valor">${novos.filter(c=>c.sem_resposta).length}</div><div class="label">Sem resposta</div><div class="sub">Follow-up urgente</div></div>
+    </div>
+
+    ${gerarInsights({total,ag,naoAg,cancel,taxa,porServico,porAtend,porDia,tipo:'novos'})}
+
+    ${gerarFunilServicos(porServico)}
+
+    <div class="grid3">
+      <div class="secao"><h2>Novos por Dia</h2><canvas id="chartDiaNovos"></canvas></div>
+      <div class="secao"><h2>Serviços</h2><canvas id="chartServicoNovos"></canvas></div>
+      <div class="secao"><h2>Agendamentos</h2><canvas id="chartAgendNovos"></canvas></div>
+    </div>
+
+    ${tabelaAtendentes(porAtend)}
+
+    <div class="secao"><h2>Lista de Novos Contatos</h2>${tabelaConversas(novos)}</div>
+  `;
+}
+
+// ── ABA ATIVOS ────────────────────────────────────────────────────────────────
+function renderAtivos(r, ativos) {
+  const total  = ativos.length;
+  const ag     = ativos.filter(c => c.agendamento === 'agendou').length;
+  const cancel = ativos.filter(c => c.status === 'cancelamento').length;
+  const retomar = ativos.filter(c => c.pipeline === 'retomar').length;
+  const taxa   = pct(ag, total);
+
+  const porServico = contarServicos(ativos);
+  const porAtend   = contarAtendentes(ativos);
+  const porPerfil  = contarCampo(ativos, 'perfil');
+  const porDia     = contarPorDia(ativos);
+
+  return `
+    <div class="cards">
+      <div class="card total" style="border-color:#3b82f6"><div class="valor">${total}</div><div class="label">Contatos ativos</div><div class="sub">Criados antes do período</div></div>
+      <div class="card agendou"><div class="valor">${ag}</div><div class="label">Confirmaram consulta</div><div class="sub">Taxa: ${taxa}%</div></div>
+      <div class="card cancelamento"><div class="valor">${cancel}</div><div class="label">Cancelamentos</div><div class="sub">${pct(cancel,total)}%</div></div>
+      <div class="card" style="border-color:#3b82f6"><div class="valor">${retomar}</div><div class="label">Retomar conversa</div><div class="sub">Aguardando follow-up</div></div>
+      <div class="card" style="border-color:#64748b"><div class="valor">${ativos.filter(c=>c.perfil==='Pais de Paciente').length}</div><div class="label">Pais de Paciente</div></div>
+      <div class="card" style="border-color:#0891b2"><div class="valor">${ativos.filter(c=>c.perfil==='Profissional de Saúde').length}</div><div class="label">Profissionais Saúde</div><div class="sub">Encaminhamentos</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="secao"><h2>Atividade por Dia</h2><canvas id="chartDiaAtivos"></canvas></div>
+      <div class="secao"><h2>Serviços</h2><canvas id="chartServicoAtivos"></canvas></div>
+      <div class="secao"><h2>Perfil do Contato</h2><canvas id="chartPerfilAtivos"></canvas></div>
+    </div>
+
+    ${tabelaAtendentes(porAtend)}
+
+    <div class="secao"><h2>Lista de Contatos Ativos</h2>${tabelaConversas(ativos)}</div>
+  `;
+}
+
+// ── ABA GERAL ─────────────────────────────────────────────────────────────────
+function renderGeral(r) {
+  const total = r.total;
+  const ag    = r.agendamentos;
+  const maxAt = Math.max(...Object.values(r.por_atendente).map(a=>a.total),1);
+  const maxPag = Math.max(...Object.values(r.por_pagamento||{}),1);
+  const maxPerf = Math.max(...Object.values(r.por_perfil||{}),1);
+
+  return `
+    <div class="cards">
+      <div class="card total"><div class="valor">${total}</div><div class="label">Total conversas</div></div>
+      <div class="card lead"><div class="valor">${r.total_novos}</div><div class="label">Novos contatos</div></div>
+      <div class="card" style="border-color:#3b82f6"><div class="valor">${r.total_ativos}</div><div class="label">Contatos ativos</div></div>
+      <div class="card agendou"><div class="valor">${ag.agendou}</div><div class="label">Agendamentos</div><div class="sub">Taxa: ${r.taxa_agendamento}%</div></div>
+      <div class="card nao_agendou"><div class="valor">${ag.nao_agendou}</div><div class="label">Não convertidos</div></div>
+      <div class="card cancelamento"><div class="valor">${r.por_status.cancelamento}</div><div class="label">Cancelamentos</div></div>
+    </div>
+
+    <div class="grid3">
+      <div class="secao"><h2>Conversas por Dia</h2><canvas id="chartDiaGeral"></canvas></div>
+      <div class="secao"><h2>Serviços Buscados</h2><canvas id="chartServicoGeral"></canvas></div>
+      <div class="secao"><h2>Agendamentos</h2><canvas id="chartAgendGeral"></canvas></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="secao">
+        <h2>Desempenho por Atendente</h2>
+        <div class="barra-wrap">
+          ${Object.entries(r.por_atendente).sort((a,b)=>b[1].total-a[1].total).map(([nome,s])=>`
+            <div class="barra-item">
+              <div class="nome" title="${nome}">${nome}</div>
+              <div class="barra"><div class="barra-fill" style="width:${s.total/maxAt*100}%"></div></div>
+              <div class="qtd">${s.total}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="secao">
+        <h2>💳 Forma de Pagamento</h2>
+        <div class="barra-wrap">
+          ${Object.entries(r.por_pagamento||{}).map(([k,v])=>`
+            <div class="barra-item">
+              <div class="nome">${k}</div>
+              <div class="barra"><div class="barra-fill" style="width:${v/maxPag*100}%"></div></div>
+              <div class="qtd">${v}</div>
+            </div>`).join('')}
+        </div>
+        ${(r.por_pagamento||{})['Não informado'] > total*0.7 ? `<div style="font-size:11px;color:#92400e;background:#fef3c7;border-radius:6px;padding:6px 8px;margin-top:8px">💡 Use as tags PARTICULAR ou PLANO DE SAÚDE no Umbler para melhorar essa métrica</div>` : ''}
+      </div>
+      <div class="secao">
+        <h2>👥 Perfil do Contato</h2>
+        <div class="barra-wrap">
+          ${Object.entries(r.por_perfil||{}).map(([k,v])=>`
+            <div class="barra-item">
+              <div class="nome">${k}</div>
+              <div class="barra"><div class="barra-fill" style="width:${v/maxPerf*100}%"></div></div>
+              <div class="qtd">${v}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <h2>Tabela de Atendentes — Visão Completa</h2>
+      <table>
+        <thead><tr><th>Atendente</th><th>Total</th><th>Leads</th><th>Agendou</th><th>Não converteu</th><th>Cancelamento</th><th>Em atendimento</th></tr></thead>
+        <tbody>
+          ${Object.entries(r.por_atendente).sort((a,b)=>b[1].total-a[1].total).map(([nome,s])=>`
+            <tr>
+              <td><strong>${esc(nome)}</strong></td>
+              <td><strong>${s.total}</strong></td>
+              <td><span class="badge lead">${s.lead||0}</span></td>
+              <td><span class="badge agendou">${s.agendou||0}</span></td>
+              <td><span class="badge nao_agendou">${s.nao_agendou||0}</span></td>
+              <td><span class="badge cancelamento">${s.cancelamento||0}</span></td>
+              <td>${s.em_atendimento||0}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function contarServicos(lista) {
+  const c = {};
+  lista.forEach(cv => (cv.servicos||[]).forEach(s => {
+    if (!c[s]) c[s] = {total:0,agendou:0,nao_agendou:0,cancelamento:0,sem_resposta:0};
+    c[s].total++;
+    if (cv.agendamento==='agendou') c[s].agendou++;
+    else if (cv.agendamento==='nao_agendou') c[s].nao_agendou++;
+    if (cv.status==='cancelamento') c[s].cancelamento++;
+    if (cv.sem_resposta) c[s].sem_resposta++;
+  }));
+  return Object.fromEntries(Object.entries(c).sort((a,b)=>b[1].total-a[1].total));
+}
+
+function contarAtendentes(lista) {
+  const c = {};
+  lista.forEach(cv => {
+    const n = cv.atendente_nome || 'Sem atendente';
+    if (!c[n]) c[n] = {total:0,agendou:0,nao_agendou:0,cancelamento:0,em_atendimento:0};
+    c[n].total++;
+    c[n][cv.status] = (c[n][cv.status]||0) + 1;
+    if (cv.agendamento==='agendou') c[n].agendou = (c[n].agendou||0) + 1;
+  });
+  return c;
+}
+
+function contarCampo(lista, campo) {
+  const c = {};
+  lista.forEach(cv => { const v = cv[campo]||'?'; c[v]=(c[v]||0)+1; });
+  return c;
+}
+
+function contarPorDia(lista) {
+  const c = {};
+  lista.forEach(cv => { if (cv.data) c[cv.data]=(c[cv.data]||0)+1; });
+  return Object.fromEntries(Object.entries(c).sort());
+}
+
+function tabelaAtendentes(porAtend) {
+  const max = Math.max(...Object.values(porAtend).map(s=>s.total),1);
+  return `<div class="secao">
+    <h2>Desempenho por Atendente</h2>
+    <table>
+      <thead><tr><th>Atendente</th><th>Total</th><th>Agendou</th><th>Taxa</th><th>Não converteu</th><th>Cancelamento</th></tr></thead>
+      <tbody>${Object.entries(porAtend).sort((a,b)=>b[1].total-a[1].total).map(([nome,s])=>`
+        <tr>
+          <td><strong>${esc(nome)}</strong></td>
+          <td><strong>${s.total}</strong></td>
+          <td><span class="badge agendou">${s.agendou||0}</span></td>
+          <td><strong>${pct(s.agendou||0,s.total)}%</strong></td>
+          <td><span class="badge nao_agendou">${s.nao_agendou||0}</span></td>
+          <td><span class="badge cancelamento">${s.cancelamento||0}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function tabelaConversas(lista) {
+  if (!lista.length) return '<div class="vazio">Nenhuma conversa neste período</div>';
+  return `<table>
+    <thead><tr><th>Contato</th><th>Atendente</th><th>Serviço</th><th>Perfil</th><th>Status</th><th>Agendamento</th><th>Última atividade</th></tr></thead>
+    <tbody>${lista.slice(0,50).map(c=>`
+      <tr>
+        <td><strong>${esc(c.contato)}</strong><br><small style="color:#aaa">${c.telefone}</small></td>
+        <td>${esc(c.atendente_nome)}</td>
+        <td><small>${esc((c.servicos||[]).join(', '))}</small></td>
+        <td><small style="color:#666">${esc(c.perfil||'')}</small></td>
+        <td><span class="badge ${c.status}">${labelStatus(c.status)}</span></td>
+        <td><span class="badge ${c.agendamento}">${labelAgend(c.agendamento)}</span></td>
+        <td style="font-size:11px;color:#999">${formatData(c.ultima_atividade)}</td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function gerarFunilServicos(porServico) {
+  const ORDEM = ['Avaliação Neuropsicológica','Psicoterapia','Psiquiatria','Acolhimento','Fonoaudiologia','Nutrição','Medicina de Família'];
+  const servicos = ORDEM.filter(s => porServico[s]).concat(Object.keys(porServico).filter(s => !ORDEM.includes(s) && s !== 'Não identificado'));
+  if (!servicos.length) return '';
+  return `<div class="secao" style="margin-bottom:20px">
+    <h2>Acolhimento por Tipo de Serviço</h2>
+    <div class="srv-grid">${servicos.map(s => {
+      const d = porServico[s];
+      const taxa = d.total > 0 ? Math.round(d.agendou/d.total*100) : 0;
+      const estrela = s === 'Avaliação Neuropsicológica';
+      return `<div class="srv-card ${estrela?'srv-destaque':''}">
+        ${estrela ? '<div class="srv-badge-top">⭐ Carro-chefe</div>' : ''}
+        <div class="srv-nome">${s}</div>
+        <div class="srv-stats">
+          <div class="srv-stat"><span class="srv-num">${d.total}</span><span class="srv-label">Leads</span></div>
+          <div class="srv-stat"><span class="srv-num verde">${d.agendou}</span><span class="srv-label">Agendaram</span></div>
+          <div class="srv-stat"><span class="srv-num laranja">${d.nao_agendou}</span><span class="srv-label">Não fecharam</span></div>
+          <div class="srv-stat"><span class="srv-num vermelho">${d.cancelamento}</span><span class="srv-label">Cancelaram</span></div>
+        </div>
+        <div class="srv-taxa-wrap">
+          <div class="srv-taxa-label">Taxa</div>
+          <div class="srv-taxa-barra"><div class="srv-taxa-fill ${taxa>=40?'alta':taxa>=20?'media':'baixa'}" style="width:${taxa}%"></div></div>
+          <div class="srv-taxa-pct">${taxa}%</div>
+        </div>
+        ${d.sem_resposta>0 ? `<div class="srv-alerta">⚠️ ${d.sem_resposta} sem resposta</div>` : ''}
+      </div>`;
+    }).join('')}</div>
+  </div>`;
+}
+
+function gerarInsights({total, ag, naoAg, cancel, taxa, porServico, porAtend, porDia, tipo}) {
+  const alertas = [], pontos = [], acoes = [];
+  if (taxa < 20) alertas.push({icon:'🔴', texto:`Taxa de agendamento muito baixa: <strong>${taxa}%</strong>. Menos de 1 em cada 5 leads está fechando.`});
+  else if (taxa < 40) alertas.push({icon:'🟡', texto:`Taxa de agendamento abaixo do ideal: <strong>${taxa}%</strong>. Há espaço para melhorar.`});
+  if (naoAg > 0) alertas.push({icon:'🟡', texto:`<strong>${naoAg} leads não convertidos</strong> — esses contatos precisam de follow-up.`});
+  if (cancel >= 3) alertas.push({icon:'🔴', texto:`<strong>${cancel} cancelamentos</strong> no período. Verifique o processo de confirmação.`});
+
+  const atList = Object.entries(porAtend).filter(([,s])=>s.total>=3);
+  const melhor = atList.sort((a,b)=>pct(b[1].agendou||0,b[1].total)-pct(a[1].agendou||0,a[1].total))[0];
+  const pior   = [...atList].sort((a,b)=>pct(a[1].agendou||0,a[1].total)-pct(b[1].agendou||0,b[1].total))[0];
+  if (melhor) pontos.push({icon:'⭐', texto:`<strong>${melhor[0]}</strong> é a melhor conversora: ${pct(melhor[1].agendou||0,melhor[1].total)}% em ${melhor[1].total} conversas.`});
+  if (pior && pior[0]!==melhor?.[0] && pct(pior[1].agendou||0,pior[1].total)<15)
+    alertas.push({icon:'🔴', texto:`<strong>${pior[0]}</strong> tem taxa de agendamento de ${pct(pior[1].agendou||0,pior[1].total)}% — verificar abordagem.`});
+
+  const svTop = Object.entries(porServico).filter(([k])=>k!=='Não identificado')[0];
+  if (svTop) pontos.push({icon:'📈', texto:`Serviço mais buscado: <strong>${svTop[0]}</strong> com ${svTop[1].total} leads.`});
+
+  const diasOrd = Object.entries(porDia).sort((a,b)=>b[1]-a[1]);
+  if (diasOrd[0]) pontos.push({icon:'📅', texto:`Dia mais movimentado: <strong>${formatDiaSemana(diasOrd[0][0])}</strong> com ${diasOrd[0][1]} conversas.`});
+
+  if (naoAg > 0) acoes.push({icon:'📞', texto:`Retomar contato com os <strong>${naoAg} leads não convertidos</strong> com mensagem personalizada.`});
+  if (melhor && pior && melhor[0]!==pior[0]) acoes.push({icon:'🤝', texto:`<strong>${melhor[0]}</strong> pode treinar <strong>${pior[0]}</strong> — há diferença significativa de conversão.`});
+
+  const renderSecao = (titulo, cor, itens) => !itens.length ? '' : `
+    <div class="insight-secao" style="border-left:4px solid ${cor}">
+      <div class="insight-titulo">${titulo}</div>
+      ${itens.map(i=>`<div class="insight-item"><span class="insight-icon">${i.icon}</span><span>${i.texto}</span></div>`).join('')}
+    </div>`;
+
+  if (!alertas.length && !pontos.length) return '';
+  return `<div class="secao insight-box" style="margin-bottom:20px">
+    <h2>Análise & Recomendações</h2>
+    <div class="insight-grid">
+      ${renderSecao('⚠️ Pontos de Atenção','#ef4444',alertas)}
+      ${renderSecao('💪 Pontos Fortes','#22c55e',pontos)}
+      ${renderSecao('🚀 Ações Comerciais','#7b3f8c',acoes)}
+    </div>
+  </div>`;
+}
+
+// ── Gráficos ────────────────────────────────────────────────────────────────────
+function desenharGraficos(r, novos, ativos) {
+  const cores = ['#7b3f8c','#a855f7','#3b82f6','#22c55e','#f59e0b','#ef4444'];
+  const diaFmt = d => { const [y,m,dia]=d.split('-'); return `${dia}/${m}`; };
+
+  function linha(id, porDia) {
+    const el = document.getElementById(id); if(!el) return;
+    const labels = Object.keys(porDia).map(diaFmt);
+    charts[id] = new Chart(el, {type:'line',data:{labels,datasets:[{label:'',data:Object.values(porDia),borderColor:'#7b3f8c',backgroundColor:'rgba(123,63,140,0.1)',tension:0.3,fill:true,pointBackgroundColor:'#7b3f8c',pointRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{ticks:{font:{size:10}}}}}});
+  }
+  function rosca(id, labels, valores, c) {
+    const el = document.getElementById(id); if(!el) return;
+    charts[id] = new Chart(el, {type:'doughnut',data:{labels,datasets:[{data:valores,backgroundColor:c||cores,borderWidth:2}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}}}});
+  }
+
+  // Novos
+  linha('chartDiaNovos', contarPorDia(novos));
+  const svNovos = contarServicos(novos);
+  const svNovosEntries = Object.entries(svNovos).filter(([k])=>k!=='Não identificado');
+  rosca('chartServicoNovos', svNovosEntries.map(([k])=>k), svNovosEntries.map(([,v])=>v.total));
+  const agNovos = novos.filter(c=>c.agendamento==='agendou').length;
+  rosca('chartAgendNovos',['Agendou','Não converteu','Indefinido'],[agNovos,novos.filter(c=>c.agendamento==='nao_agendou').length,novos.filter(c=>c.agendamento==='indefinido').length],['#22c55e','#f97316','#d1d5db']);
+
+  // Ativos
+  linha('chartDiaAtivos', contarPorDia(ativos));
+  const svAtivos = contarServicos(ativos);
+  const svAtivosEntries = Object.entries(svAtivos).filter(([k])=>k!=='Não identificado');
+  rosca('chartServicoAtivos', svAtivosEntries.map(([k])=>k), svAtivosEntries.map(([,v])=>v.total));
+  const perfAtivos = contarCampo(ativos,'perfil');
+  rosca('chartPerfilAtivos', Object.keys(perfAtivos), Object.values(perfAtivos));
+
+  // Geral
+  linha('chartDiaGeral', r.por_dia||{});
+  const svGeralEntries = Object.entries(r.por_servico||{}).filter(([k])=>k!=='Não identificado');
+  rosca('chartServicoGeral', svGeralEntries.map(([k])=>k), svGeralEntries.map(([,v])=>v));
+  rosca('chartAgendGeral',['Agendou','Não converteu','Indefinido'],[r.agendamentos.agendou,r.agendamentos.nao_agendou,r.agendamentos.indefinido],['#22c55e','#f97316','#d1d5db']);
+}
+
+// ── Utilitários ────────────────────────────────────────────────────────────────
+function pct(v,t){ return t>0?Math.round(v/t*100):0; }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatData(s){ if(!s)return'—'; return new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function formatDiaSemana(d){ if(!d)return'—'; const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; const dt=new Date(d+'T12:00:00'); return `${dias[dt.getDay()]} ${d.split('-').reverse().join('/')}`; }
+function labelStatus(s){ return {lead:'Lead',cancelamento:'Cancelamento',perdido:'Perdido',resolvido:'Resolvido',em_atendimento:'Em atendimento'}[s]||s; }
+function labelAgend(s){ return {agendou:'Agendou',nao_agendou:'Não agendou',indefinido:'Indefinido'}[s]||s; }
+
+function exportarCSV() {
+  if (!dadosGlobais.length) return alert('Carregue os dados primeiro');
+  const header = ['Contato','Telefone','Atendente','Servico','Perfil','Status','Agendamento','Eh_Novo','Data'];
+  const rows = dadosGlobais.map(c=>[c.contato,c.telefone,c.atendente_nome,(c.servicos||[]).join('|'),c.perfil,labelStatus(c.status),labelAgend(c.agendamento),c.eh_novo?'Novo':'Ativo',c.data]);
+  const csv = [header,...rows].map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('﻿'+csv); a.download=`atendimento_${hoje()}.csv`; a.click();
+}
+
+document.getElementById('inicio').value = diasAtras(29);
+document.getElementById('fim').value    = hoje();
+carregar();
+</script>
+</body>
+</html>

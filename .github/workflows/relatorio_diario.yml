@@ -1,0 +1,24 @@
+name: Relatório Diário Afetivamente
+
+on:
+  schedule:
+    # 11:00 UTC = 08:00 BRT (horário de Brasília)
+    - cron: '0 11 * * *'
+  workflow_dispatch:  # permite rodar manualmente pelo GitHub
+
+jobs:
+  enviar-relatorio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Rodar relatório
+        env:
+          UMBLER_TOKEN:         ${{ secrets.UMBLER_TOKEN }}
+          UMBLER_ORG_ID:        ${{ secrets.UMBLER_ORG_ID }}
+          ZAPI_INSTANCE:        ${{ secrets.ZAPI_INSTANCE }}
+          ZAPI_TOKEN:           ${{ secrets.ZAPI_TOKEN }}
+          ZAPI_CLIENT_TOKEN:    ${{ secrets.ZAPI_CLIENT_TOKEN }}
+          WHATS_DESTINATARIOS:  ${{ secrets.WHATS_DESTINATARIOS }}
+        run: python3 Dashboard/relatorio_diario/relatorio_standalone.py

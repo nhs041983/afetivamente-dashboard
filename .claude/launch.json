@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dashboard-afetivamente",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["iniciar.sh"],
+      "port": 8765
+    }
+  ]
+}
