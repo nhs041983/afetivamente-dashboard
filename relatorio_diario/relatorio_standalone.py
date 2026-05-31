@@ -77,7 +77,10 @@ def detectar_agendamento(texto, tags):
     return "nao_agendou"
 
 
-def processar(chats, ontem):
+def processar(chats, periodo_ini, periodo_fim=None):
+    """periodo_ini: data início do período. eh_novo = criado dentro do período."""
+    if periodo_fim is None:
+        periodo_fim = periodo_ini
     resultado = []
     for c in chats:
         contato    = c.get("contact") or {}
@@ -90,7 +93,7 @@ def processar(chats, ontem):
         texto = (msg.get("content") or msg.get("text") or "").lower()
 
         data_criacao = (c.get("createdAtUTC") or "")[:10]
-        eh_novo      = data_criacao == ontem
+        eh_novo      = periodo_ini <= data_criacao <= periodo_fim
 
         # Atendente
         atend_id = membro.get("id", "")
@@ -197,7 +200,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         linhas_atend += f"  *{nome}* — {conv_dia} hoje · {taxa_a}% mês\n"
 
     return (
-        f"🏥 *AFETIVAMENTE* — _{data_ext}_\n\n"
+        f"🏥 *AFETIVAMENTE* · _{data_ext}_\n\n"
         f"*HOJE*\n"
         f"  Leads · *{total_dia}*\n"
         f"  Agendamentos · *{agend_dia}*\n"
@@ -260,9 +263,9 @@ def main():
 
     print(f"✅ Hoje: {len(chats_ontem)} | Semana: {len(chats_semana)} | Mês: {len(chats_mes)}")
 
-    conv_ontem  = processar(chats_ontem,  ontem)
-    conv_semana = processar(chats_semana, ontem)
-    conv_mes    = processar(chats_mes,    ontem)
+    conv_ontem  = processar(chats_ontem,  ontem,   ontem)
+    conv_semana = processar(chats_semana, sem_ini, ontem)
+    conv_mes    = processar(chats_mes,    mes_ini, ontem)
 
     mensagem = montar_mensagem(conv_ontem, conv_semana, conv_mes, ontem_fmt)
 
