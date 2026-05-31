@@ -21,4 +21,4 @@ jobs:
           ZAPI_TOKEN:           ${{ secrets.ZAPI_TOKEN }}
           ZAPI_CLIENT_TOKEN:    ${{ secrets.ZAPI_CLIENT_TOKEN }}
           WHATS_DESTINATARIOS:  ${{ secrets.WHATS_DESTINATARIOS }}
-        run: python3 Dashboard/relatorio_diario/relatorio_standalone.py
+        run: python3 relatorio_diario/relatorio_standalone.py
