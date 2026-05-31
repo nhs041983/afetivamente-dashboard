@@ -149,7 +149,8 @@ def montar_mensagem(conversas, ontem_fmt):
         f"┌ 📥 *{total_novos}* novos  📅 *{agendados}* agend.  ❌ *{cancelados}* cancel.\n"
         f"└ 📈 Taxa de conversão: *{taxa}%*\n\n"
         f"{linhas}\n"
-        f"👥 {linha_atend}"
+        f"👥 {linha_atend}\n\n"
+        f"_SETOR COMERCIAL — INFORMAÇÃO DIA ANTERIOR_"
     )
 
 
