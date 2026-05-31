@@ -9,11 +9,11 @@ import os, json, urllib.request, urllib.parse
 from datetime import datetime, timedelta
 
 # ── Credenciais (vêm das variáveis de ambiente / GitHub Secrets) ──
-UMBLER_TOKEN      = os.environ["UMBLER_TOKEN"]
-UMBLER_ORG_ID     = os.environ["UMBLER_ORG_ID"]
-ZAPI_INSTANCE     = os.environ["ZAPI_INSTANCE"]
-ZAPI_TOKEN        = os.environ["ZAPI_TOKEN"]
-ZAPI_CLIENT_TOKEN = os.environ.get("ZAPI_CLIENT_TOKEN", "")
+UMBLER_TOKEN      = os.environ["UMBLER_TOKEN"].strip()
+UMBLER_ORG_ID     = os.environ["UMBLER_ORG_ID"].strip()
+ZAPI_INSTANCE     = os.environ["ZAPI_INSTANCE"].strip()
+ZAPI_TOKEN        = os.environ["ZAPI_TOKEN"].strip()
+ZAPI_CLIENT_TOKEN = os.environ.get("ZAPI_CLIENT_TOKEN", "").strip()
 
 DESTINATARIOS = [
     n.strip() for n in os.environ.get("WHATS_DESTINATARIOS", "").split(",") if n.strip()
