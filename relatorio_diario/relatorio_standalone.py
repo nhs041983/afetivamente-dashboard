@@ -114,42 +114,85 @@ def processar(chats, ontem):
 # MONTAGEM DA MENSAGEM
 # ─────────────────────────────────────────────
 
-def montar_mensagem(conversas, ontem_fmt):
-    novos   = [c for c in conversas if c["eh_novo"]]
-    agendados  = sum(1 for c in novos if c["agendamento"] == "agendou")
-    cancelados = sum(1 for c in novos if c["agendamento"] == "cancelamento")
-    total_novos = len(novos)
-    taxa = round(agendados / total_novos * 100) if total_novos > 0 else 0
+def calcular_taxa(conversas):
+    """Taxa de conversão de leads novos para agendamentos."""
+    novos = [c for c in conversas if c["eh_novo"]]
+    agend = sum(1 for c in novos if c["agendamento"] == "agendou")
+    return len(novos), agend, round(agend / len(novos) * 100) if novos else 0
 
-    # Especialidades dos novos
+
+def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt):
+    # ── Dados do dia ──
+    novos_dia   = [c for c in conversas_ontem if c["eh_novo"]]
+    agend_dia   = sum(1 for c in novos_dia if c["agendamento"] == "agendou")
+    cancel_dia  = sum(1 for c in novos_dia if c["agendamento"] == "cancelamento")
+    total_dia   = len(novos_dia)
+    taxa_dia    = round(agend_dia / total_dia * 100) if total_dia else 0
+
+    # ── Taxa semana e mês ──
+    _, agend_sem, taxa_sem = calcular_taxa(conversas_semana)
+    tot_sem = sum(1 for c in conversas_semana if c["eh_novo"])
+
+    _, agend_mes, taxa_mes = calcular_taxa(conversas_mes)
+    tot_mes = sum(1 for c in conversas_mes if c["eh_novo"])
+
+    # ── Especialidades do dia ──
     ESPECIALIDADES = [
         ("Avaliação Neuropsicológica", "🧠", "Avaliação"),
         ("Psiquiatria",                "💊", "Psiquiatria"),
         ("Psicoterapia",               "🛋️", "Psicologia"),
     ]
     maior = max(len(label) for _, _, label in ESPECIALIDADES)
-    linhas = ""
+    linhas_serv = ""
     for chave, emoji, label in ESPECIALIDADES:
-        total = sum(1 for c in novos if c["servico"] == chave)
-        agd   = sum(1 for c in novos if c["servico"] == chave and c["agendamento"] == "agendou")
+        total = sum(1 for c in novos_dia if c["servico"] == chave)
+        agd   = sum(1 for c in novos_dia if c["servico"] == chave and c["agendamento"] == "agendou")
         pontos  = "." * (maior - len(label) + 4)
         agd_txt = f" ({agd}✅)" if agd > 0 else ""
-        linhas += f"{emoji} {label} {pontos} *{total}* leads{agd_txt}\n"
+        linhas_serv += f"{emoji} {label} {pontos} *{total}* leads{agd_txt}\n"
 
-    # Atendentes (total do dia, não só novos)
+    # ── Especialidade com maior abandono (mês) ──
+    abandono = {}
+    for chave, _, label in ESPECIALIDADES:
+        total = sum(1 for c in conversas_mes if c["eh_novo"] and c["servico"] == chave)
+        agd   = sum(1 for c in conversas_mes if c["eh_novo"] and c["servico"] == chave and c["agendamento"] == "agendou")
+        perdidos = total - agd
+        if total > 0:
+            abandono[label] = (perdidos, total)
+    pior_serv = max(abandono, key=lambda x: abandono[x][0]) if abandono else None
+    linha_abandono = ""
+    if pior_serv:
+        perd, tot = abandono[pior_serv]
+        linha_abandono = f"⚠️ Maior abandono: *{pior_serv}* ({perd}/{tot} sem agendar)\n"
+
+    # ── Taxa por atendente (mês) ──
     ATENDENTES = ["Amanda", "Ana", "Francine", "Lara"]
-    partes = []
+    linhas_atend = ""
     for nome in ATENDENTES:
-        t = sum(1 for c in conversas if c["atendente"] == nome)
-        partes.append(f"{nome} *{t}*")
-    linha_atend = " · ".join(partes)
+        novos_a = [c for c in conversas_mes if c["eh_novo"] and c["atendente"] == nome]
+        agend_a = sum(1 for c in novos_a if c["agendamento"] == "agendou")
+        taxa_a  = round(agend_a / len(novos_a) * 100) if novos_a else 0
+        conv_dia_a = sum(1 for c in conversas_ontem if c["atendente"] == nome)
+        linhas_atend += f"  {nome}: *{conv_dia_a}* conv. hoje · *{taxa_a}%* conv./mês\n"
+
+    # ── Leads perdidos no mês ──
+    perdidos_mes = sum(
+        1 for c in conversas_mes
+        if c["eh_novo"] and c["agendamento"] not in ("agendou",)
+    )
 
     return (
         f"🏥 *Afetivamente — {ontem_fmt}*\n\n"
-        f"┌ 📥 *{total_novos}* novos  📅 *{agendados}* agend.  ❌ *{cancelados}* cancel.\n"
-        f"└ 📈 Taxa de conversão: *{taxa}%*\n\n"
-        f"{linhas}\n"
-        f"👥 {linha_atend}\n\n"
+        f"┌ 📥 *{total_dia}* novos  📅 *{agend_dia}* agend.  ❌ *{cancel_dia}* cancel.\n"
+        f"└ 📈 Conversão hoje: *{taxa_dia}%*\n\n"
+        f"{linhas_serv}\n"
+        f"━━━ Conversão ━━━\n"
+        f"  📅 Semana: *{agend_sem}/{tot_sem}* leads → *{taxa_sem}%*\n"
+        f"  📆 Mês: *{agend_mes}/{tot_mes}* leads → *{taxa_mes}%*\n"
+        f"  🚨 Leads perdidos no mês: *{perdidos_mes}*\n\n"
+        f"━━━ Atendentes (mês) ━━━\n"
+        f"{linhas_atend}\n"
+        f"{linha_abandono}"
         f"_SETOR COMERCIAL — INFORMAÇÃO DIA ANTERIOR_"
     )
 
@@ -173,24 +216,36 @@ def enviar(numero, mensagem):
 # MAIN
 # ─────────────────────────────────────────────
 
-def main():
-    ontem     = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    ontem_fmt = (datetime.now() - timedelta(days=1)).strftime("%d/%m/%Y")
-    print(f"📅 Buscando dados de {ontem}...")
+def filtrar_por_periodo(items, d_ini, d_fim):
+    return [
+        c for c in items
+        if d_ini <= ((c.get("contact") or {}).get("lastActiveUTC") or
+                     c.get("eventAtUTC") or c.get("createdAtUTC") or "")[:10] <= d_fim
+    ]
 
-    raw = umbler_get("chats", {"organizationId": UMBLER_ORG_ID, "take": 250})
+
+def main():
+    hoje      = datetime.now()
+    ontem     = (hoje - timedelta(days=1)).strftime("%Y-%m-%d")
+    ontem_fmt = (hoje - timedelta(days=1)).strftime("%d/%m/%Y")
+    sem_ini   = (hoje - timedelta(days=7)).strftime("%Y-%m-%d")
+    mes_ini   = hoje.strftime("%Y-%m-01")
+
+    print(f"📅 Buscando dados...")
+    raw   = umbler_get("chats", {"organizationId": UMBLER_ORG_ID, "take": 250})
     items = raw.get("items", [])
 
-    # Filtra só conversas ativas ontem
-    chats_ontem = [
-        c for c in items
-        if ((c.get("contact") or {}).get("lastActiveUTC") or
-            c.get("eventAtUTC") or c.get("createdAtUTC") or "")[:10] == ontem
-    ]
-    print(f"✅ {len(chats_ontem)} conversas em {ontem}")
+    chats_ontem  = filtrar_por_periodo(items, ontem, ontem)
+    chats_semana = filtrar_por_periodo(items, sem_ini, ontem)
+    chats_mes    = filtrar_por_periodo(items, mes_ini, ontem)
 
-    conversas  = processar(chats_ontem, ontem)
-    mensagem   = montar_mensagem(conversas, ontem_fmt)
+    print(f"✅ Hoje: {len(chats_ontem)} | Semana: {len(chats_semana)} | Mês: {len(chats_mes)}")
+
+    conv_ontem  = processar(chats_ontem,  ontem)
+    conv_semana = processar(chats_semana, ontem)
+    conv_mes    = processar(chats_mes,    ontem)
+
+    mensagem = montar_mensagem(conv_ontem, conv_semana, conv_mes, ontem_fmt)
 
     print("\n── Preview ──")
     print(mensagem)
