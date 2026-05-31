@@ -181,18 +181,64 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         if c["eh_novo"] and c["agendamento"] not in ("agendou",)
     )
 
+    def barra(valor, maximo, tamanho=8):
+        """Gera barra visual ████░░░░"""
+        if maximo == 0:
+            return "░" * tamanho
+        cheios = round((valor / maximo) * tamanho)
+        return "█" * cheios + "░" * (tamanho - cheios)
+
+    def barra_pct(pct, tamanho=10):
+        """Gera barra de porcentagem [████░░░░░░]"""
+        cheios = round((pct / 100) * tamanho)
+        return "[" + "█" * cheios + "░" * (tamanho - cheios) + "]"
+
+    # Máximo de conversas do dia para barras dos atendentes
+    max_conv = max(
+        (sum(1 for c in conversas_ontem if c["atendente"] == n) for n in ["Amanda","Ana","Francine","Lara"]),
+        default=1
+    ) or 1
+
+    # Atendentes com barras
+    ATENDENTES = ["Amanda", "Ana", "Francine", "Lara"]
+    linhas_atend = ""
+    for nome in ATENDENTES:
+        novos_a  = [c for c in conversas_mes if c["eh_novo"] and c["atendente"] == nome]
+        agend_a  = sum(1 for c in novos_a if c["agendamento"] == "agendou")
+        taxa_a   = round(agend_a / len(novos_a) * 100) if novos_a else 0
+        conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
+        bar      = barra(conv_dia, max_conv)
+        linhas_atend += f"{nome:<10} {bar}  *{conv_dia}* conv · *{taxa_a}%*\n"
+
+    # Barras de conversão semana/mês
+    bar_sem = barra_pct(taxa_sem)
+    bar_mes = barra_pct(taxa_mes)
+
+    # Data formatada por extenso
+    meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
+    d = datetime.now() - timedelta(days=1)
+    data_ext = f"{d.day} de {meses[d.month-1]}. de {d.year}"
+
     return (
-        f"🏥 *Afetivamente — {ontem_fmt}*\n\n"
-        f"┌ 📥 *{total_dia}* novos  📅 *{agend_dia}* agend.  ❌ *{cancel_dia}* cancel.\n"
-        f"└ 📈 Conversão hoje: *{taxa_dia}%*\n\n"
+        f"🏥 *AFETIVAMENTE* | {data_ext}\n\n"
+        f"📊 *HOJE*\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"📥 Leads novos    ▸ *{total_dia}*\n"
+        f"📅 Agendamentos   ▸ *{agend_dia}*\n"
+        f"❌ Cancelamentos  ▸ *{cancel_dia}*\n"
+        f"📈 Conversão      ▸ *{taxa_dia}%*\n\n"
+        f"🎯 *ESPECIALIDADES*\n"
+        f"━━━━━━━━━━━━━━━━\n"
         f"{linhas_serv}\n"
-        f"━━━ Conversão ━━━\n"
-        f"  📅 Semana: *{agend_sem}/{tot_sem}* leads → *{taxa_sem}%*\n"
-        f"  📆 Mês: *{agend_mes}/{tot_mes}* leads → *{taxa_mes}%*\n"
-        f"  🚨 Leads perdidos no mês: *{perdidos_mes}*\n\n"
-        f"━━━ Atendentes (mês) ━━━\n"
-        f"{linhas_atend}\n"
-        f"{linha_abandono}"
+        f"📅 *CONVERSÃO*\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"Semana  {bar_sem}  *{taxa_sem}%* ({agend_sem}/{tot_sem})\n"
+        f"Mês     {bar_mes}  *{taxa_mes}%* ({agend_mes}/{tot_mes})\n"
+        f"🚨 Perdidos no mês: *{perdidos_mes}*\n\n"
+        f"👥 *EQUIPE*\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"{linhas_atend}"
+        f"{linha_abandono}\n"
         f"_SETOR COMERCIAL — INFORMAÇÃO DIA ANTERIOR_"
     )
 
