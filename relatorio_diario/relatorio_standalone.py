@@ -186,7 +186,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
     d = datetime.now() - timedelta(days=1)
     data_ext = f"{d.day} {meses[d.month-1]} {d.year}"
 
-    # Atendentes
+    # Atendentes — alinhamento fixo
     ATENDENTES = ["Amanda", "Ana", "Francine", "Lara"]
     linhas_atend = ""
     for nome in ATENDENTES:
@@ -194,26 +194,28 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         agend_a  = sum(1 for c in novos_a if c["agendamento"] == "agendou")
         taxa_a   = round(agend_a / len(novos_a) * 100) if novos_a else 0
         conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
-        linhas_atend += f"  {nome:<10} *{conv_dia}* conv  |  *{taxa_a}%* conversão\n"
+        linhas_atend += f"  {nome:<9} {str(conv_dia):>2} conv   {str(taxa_a):>3}% conv.\n"
 
     return (
-        f"🏥 *AFETIVAMENTE*  _{data_ext}_\n"
-        f"―――――――――――――――――――\n\n"
+        f"🏥 *AFETIVAMENTE* — _{data_ext}_\n\n"
         f"*HOJE*\n"
-        f"  📥 Novos leads    *{total_dia}*\n"
-        f"  📅 Agendamentos   *{agend_dia}*\n"
-        f"  ❌ Cancelamentos  *{cancel_dia}*\n"
-        f"  📈 Conversão      *{taxa_dia}%*\n\n"
+        f"  Leads        *{total_dia}*\n"
+        f"  Agendamentos *{agend_dia}*\n"
+        f"  Cancelamentos *{cancel_dia}*\n"
+        f"  Conversão    *{taxa_dia}%*\n\n"
         f"*ESPECIALIDADES*\n"
         f"{linhas_serv}\n"
         f"*CONVERSÃO*\n"
-        f"  7 dias   *{taxa_sem}%*  ({agend_sem}/{tot_sem} leads)\n"
-        f"  30 dias  *{taxa_mes}%*  ({agend_mes}/{tot_mes} leads)\n"
-        f"  🚨 Perdidos: *{perdidos_mes}*\n\n"
+        f"  7 dias    *{taxa_sem}%*  ({agend_sem}/{tot_sem})\n"
+        f"  30 dias   *{taxa_mes}%*  ({agend_mes}/{tot_mes})\n"
+        f"  Perdidos  *{perdidos_mes}*\n\n"
         f"*EQUIPE*\n"
+        f"```\n"
+        f"{'Nome':<9} {'Hoje':>4}   {'Conv%':>5}\n"
+        f"{'─'*24}\n"
         f"{linhas_atend}"
-        f"{linha_abandono}"
-        f"―――――――――――――――――――\n"
+        f"```"
+        f"{linha_abandono}\n"
         f"_Setor Comercial — dia anterior_"
     )
 
