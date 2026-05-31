@@ -224,7 +224,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  Perdidos · *{perdidos_mes}*\n\n"
         f"*EQUIPE COMERCIAL*\n"
         f"{linhas_atend}"
-        f"  🤖 IA Amanda · {amanda_dia} hoje · {amanda_mes} no mês\n"
+        f"  🤖 IA Amanda · *{amanda_dia}* atendimentos hoje\n"
         f"{linha_abandono}\n"
         f"_Setor Comercial — dia anterior_"
     )
