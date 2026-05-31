@@ -51,7 +51,9 @@ def umbler_get(path, params=None):
     url = f"https://app-utalk.umbler.com/api/v1/{path}"
     if params:
         url += "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {UMBLER_TOKEN}"})
+    # Garante que o token só contém caracteres ASCII válidos para headers
+    token_safe = UMBLER_TOKEN.encode("ascii", errors="ignore").decode("ascii").strip()
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token_safe}"})
     with urllib.request.urlopen(req, timeout=90) as r:
         return json.loads(r.read())
 
