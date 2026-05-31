@@ -229,17 +229,18 @@ def processar_conversas(chats, membros):
         data_criacao = (c.get("createdAtUTC") or "")[:10]
         sem_resposta = any(t.upper() in ("LEAD SEM RESPOSTA","NÃO RESPONDEU","NAO RESPONDEU","NÃO RESPONDEU") for t in todas_tags)
 
-        # Detectar atendente: começa pelo ID
+        # Atendente — ID da API tem prioridade
         atendente_id_final = membro.get("id", "")
-
-        # Amanda detectada pela tag
-        if any("AMANDA" in t.upper() for t in todas_tags):
-            atendente_id_final = "__tag_amanda__"
-
-        # Lara compartilha login com Ana — detectar pelo nome exibido na API
         nome_api = (membro.get("name") or membro.get("displayName") or "").strip()
-        if "LARA" in nome_api.upper():
-            atendente_id_final = "__tag_lara__"
+
+        if atendente_id_final and atendente_id_final in membros:
+            # ID reconhecido — só verifica Lara (mesmo login que Ana)
+            if "LARA" in nome_api.upper():
+                atendente_id_final = "__tag_lara__"
+        else:
+            # Sem atendente atribuído — detecta Amanda pela tag
+            if any("AMANDA" in t.upper() for t in todas_tags):
+                atendente_id_final = "__tag_amanda__"
 
         # Pagamento
         pagamento = "Não informado"

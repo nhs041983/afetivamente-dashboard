@@ -95,13 +95,19 @@ def processar(chats, periodo_ini, periodo_fim=None):
         data_criacao = (c.get("createdAtUTC") or "")[:10]
         eh_novo      = periodo_ini <= data_criacao <= periodo_fim
 
-        # Atendente
+        # Atendente — ID da API tem prioridade
         atend_id = membro.get("id", "")
         nome_api = (membro.get("name") or membro.get("displayName") or "").upper()
-        if any("AMANDA" in t.upper() for t in todas_tags):
-            atend_id = "__tag_amanda__"
-        elif "LARA" in nome_api:
-            atend_id = "__tag_lara__"
+
+        if atend_id and atend_id in MEMBROS:
+            # Atendente identificado pelo ID — só verifica Lara (mesmo login que Ana)
+            if "LARA" in nome_api:
+                atend_id = "__tag_lara__"
+        else:
+            # Sem atendente atribuído — detecta Amanda pela tag
+            if any("AMANDA" in t.upper() for t in todas_tags):
+                atend_id = "__tag_amanda__"
+
         atendente = MEMBROS.get(atend_id, "Outros")
 
         resultado.append({
