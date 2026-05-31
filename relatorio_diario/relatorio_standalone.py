@@ -195,15 +195,19 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
     d = datetime.now() - timedelta(days=1)
     data_ext = f"{d.day} {meses[d.month-1]} {d.year}"
 
-    # Atendentes — formato simples
-    ATENDENTES = ["Amanda", "Ana", "Francine", "Lara"]
+    # Equipe comercial — só quem fecha (Francine, Ana, Lara)
+    COMERCIAL = ["Francine", "Ana", "Lara"]
     linhas_atend = ""
-    for nome in ATENDENTES:
+    for nome in COMERCIAL:
         novos_a  = [c for c in conversas_mes if c["eh_novo"] and c["atendente"] == nome]
         agend_a  = sum(1 for c in novos_a if c["agendamento"] == "agendou")
         taxa_a   = round(agend_a / len(novos_a) * 100) if novos_a else 0
         conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
         linhas_atend += f"  *{nome}* — {conv_dia} hoje · {taxa_a}% mês\n"
+
+    # Amanda (IA) — só volume, sem conversão
+    amanda_dia = sum(1 for c in conversas_ontem if c["atendente"] == "Amanda")
+    amanda_mes = sum(1 for c in conversas_mes if c["atendente"] == "Amanda")
 
     return (
         f"🏥 *AFETIVAMENTE* · _{data_ext}_\n\n"
@@ -218,8 +222,9 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  7 dias · *{taxa_sem}%* ({agend_sem}/{tot_sem})\n"
         f"  30 dias · *{taxa_mes}%* ({agend_mes}/{tot_mes})\n"
         f"  Perdidos · *{perdidos_mes}*\n\n"
-        f"*EQUIPE*\n"
+        f"*EQUIPE COMERCIAL*\n"
         f"{linhas_atend}"
+        f"  🤖 IA Amanda · {amanda_dia} hoje · {amanda_mes} no mês\n"
         f"{linha_abandono}\n"
         f"_Setor Comercial — dia anterior_"
     )
