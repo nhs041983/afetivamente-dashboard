@@ -240,7 +240,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  30 dias · *{sum(1 for c in conversas_mes if c.get('sem_resposta'))}* contatos\n\n"
         f"*EQUIPE COMERCIAL*\n"
         f"{linhas_atend}"
-        f"  🤖 Amanda (IA) · *{amanda_dia}* hoje\n"
+        f"  🤖 Amanda (IA) · *{amanda_dia}* conversas hoje\n"
         f"{linha_abandono}\n"
         f"_Setor Comercial — dia anterior_"
     )
