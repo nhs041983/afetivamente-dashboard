@@ -3,7 +3,10 @@ name: Relatório Diário Afetivamente
 on:
   schedule:
     # 11:00 UTC = 08:00 BRT (horário de Brasília)
-    - cron: '0 11 * * *'
+    # Nota: GitHub pode atrasar até 15 minutos em horários de pico
+    - cron: '0 11 * * 1-5'
+    # Sábado e domingo também (clínica funciona?)
+    - cron: '0 11 * * 6,0'
   workflow_dispatch:  # permite rodar manualmente pelo GitHub
 
 jobs:
