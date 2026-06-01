@@ -102,6 +102,11 @@ def processar(chats, periodo_ini, periodo_fim=None):
         if any(t in NAO_LEADS for t in tags_upper):
             eh_novo = False  # não conta nas métricas de conversão
 
+        # Aguardando resposta
+        sem_resposta = any(t in tags_upper for t in [
+            "LEAD SEM RESPOSTA", "NÃO RESPONDEU", "NAO RESPONDEU", "RETOMAR CONVERSA"
+        ])
+
         # Atendente — ID da API tem prioridade
         atend_id = membro.get("id", "")
         nome_api = (membro.get("name") or membro.get("displayName") or "").upper()
@@ -118,7 +123,8 @@ def processar(chats, periodo_ini, periodo_fim=None):
         atendente = MEMBROS.get(atend_id, "Outros")
 
         resultado.append({
-            "eh_novo":    eh_novo,
+            "eh_novo":      eh_novo,
+            "sem_resposta": sem_resposta,
             "atendente":  atendente,
             "servico":    detectar_servico(todas_tags),
             "agendamento": detectar_agendamento(texto, todas_tags),
@@ -229,6 +235,9 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  7 dias · *{taxa_sem}%* ({agend_sem}/{tot_sem})\n"
         f"  30 dias · *{taxa_mes}%* ({agend_mes}/{tot_mes})\n"
         f"  Perdidos · *{perdidos_mes}*\n\n"
+        f"*AGUARDANDO RESPOSTA*\n"
+        f"  7 dias · *{sum(1 for c in conversas_semana if c.get('sem_resposta'))}* contatos\n"
+        f"  30 dias · *{sum(1 for c in conversas_mes if c.get('sem_resposta'))}* contatos\n\n"
         f"*EQUIPE COMERCIAL*\n"
         f"{linhas_atend}"
         f"  🤖 Amanda (IA) · *{amanda_dia}* hoje\n"
