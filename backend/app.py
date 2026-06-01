@@ -123,9 +123,14 @@ TAG_PIPELINE = {
 }
 
 TAG_PERFIL = {
-    "PAIS DE PACIENTE": "Pais de Paciente",
-    "PROFISSIONAIS":    "Profissional de Saúde",
-    "FORNECEDOR":       "Fornecedor",
+    "PAIS DE PACIENTE":       "Pais de Paciente",
+    "PROFISSIONAIS":          "Profissional de Saúde",
+    "FORNECEDOR":             "Fornecedor",
+    "CURRÍCULOS":             "Currículo",
+    "CURRICULOS":             "Currículo",
+    "SERVIÇO NÃO DISPONÍVEL": "Serviço Não Disponível",
+    "SERVICO NAO DISPONIVEL": "Serviço Não Disponível",
+    "PROFISSIONAIS PARCEIROS": "Profissional Parceiro",
 }
 
 def detectar_servicos(texto, tags):

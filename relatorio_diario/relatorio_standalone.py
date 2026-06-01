@@ -95,6 +95,13 @@ def processar(chats, periodo_ini, periodo_fim=None):
         data_criacao = (c.get("createdAtUTC") or "")[:10]
         eh_novo      = periodo_ini <= data_criacao <= periodo_fim
 
+        # Ignorar contatos que não são leads (currículo, serviço indisponível, parceiros)
+        tags_upper = [t.upper().strip() for t in todas_tags]
+        NAO_LEADS = {"CURRÍCULOS", "CURRICULOS", "SERVIÇO NÃO DISPONÍVEL",
+                     "SERVICO NAO DISPONIVEL", "PROFISSIONAIS PARCEIROS"}
+        if any(t in NAO_LEADS for t in tags_upper):
+            eh_novo = False  # não conta nas métricas de conversão
+
         # Atendente — ID da API tem prioridade
         atend_id = membro.get("id", "")
         nome_api = (membro.get("name") or membro.get("displayName") or "").upper()
@@ -262,7 +269,7 @@ def main():
     ontem     = (hoje - timedelta(days=1)).strftime("%Y-%m-%d")
     ontem_fmt = (hoje - timedelta(days=1)).strftime("%d/%m/%Y")
     sem_ini   = (hoje - timedelta(days=7)).strftime("%Y-%m-%d")
-    mes_ini   = hoje.strftime("%Y-%m-01")
+    mes_ini   = (hoje - timedelta(days=30)).strftime("%Y-%m-%d")
 
     print(f"📅 Buscando dados...")
     raw   = umbler_get("chats", {"organizationId": UMBLER_ORG_ID, "take": 250})
