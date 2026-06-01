@@ -122,9 +122,13 @@ def processar(chats, periodo_ini, periodo_fim=None):
 
         atendente = MEMBROS.get(atend_id, "Outros")
 
+        # Amanda — conta todas com a tag, independente do atendente atribuído
+        tag_amanda = any("AMANDA" in t.upper() for t in todas_tags)
+
         resultado.append({
             "eh_novo":      eh_novo,
             "sem_resposta": sem_resposta,
+            "tag_amanda":   tag_amanda,
             "atendente":  atendente,
             "servico":    detectar_servico(todas_tags),
             "agendamento": detectar_agendamento(texto, todas_tags),
@@ -218,9 +222,8 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
         linhas_atend += f"  *{nome}* — {conv_dia} hoje · {taxa_a}% mês\n"
 
-    # Amanda (IA) — só volume, sem conversão
-    amanda_dia = sum(1 for c in conversas_ontem if c["atendente"] == "Amanda")
-    amanda_mes = sum(1 for c in conversas_mes if c["atendente"] == "Amanda")
+    # Amanda (IA) — todas com tag, independente do atendente atribuído
+    amanda_dia = sum(1 for c in conversas_ontem if c.get("tag_amanda"))
 
     return (
         f"🏥 *AFETIVAMENTE* · _{data_ext}_\n\n"
