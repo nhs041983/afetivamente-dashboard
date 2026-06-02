@@ -212,26 +212,26 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
     d = datetime.now() - timedelta(days=1)
     data_ext = f"{d.day} {meses[d.month-1]} {d.year}"
 
-    # Equipe comercial — só quem fecha (Francine, Ana, Lara)
+    # Equipe — só quantidade de conversas do dia
     COMERCIAL = ["Francine", "Ana", "Lara"]
     linhas_atend = ""
     for nome in COMERCIAL:
-        novos_a  = [c for c in conversas_mes if c["eh_novo"] and c["atendente"] == nome]
-        agend_a  = sum(1 for c in novos_a if c["agendamento"] == "agendou")
-        taxa_a   = round(agend_a / len(novos_a) * 100) if novos_a else 0
         conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
-        linhas_atend += f"  *{nome}* — {conv_dia} hoje · {taxa_a}% mês\n"
+        linhas_atend += f"  *{nome}* · {conv_dia} conversas\n"
 
-    # Amanda (IA) — todas com tag, independente do atendente atribuído
+    # Amanda (IA)
     amanda_dia = sum(1 for c in conversas_ontem if c.get("tag_amanda"))
+
+    # Aguardando resposta
+    aguard_7  = sum(1 for c in conversas_semana if c.get("sem_resposta"))
+    aguard_30 = sum(1 for c in conversas_mes    if c.get("sem_resposta"))
 
     return (
         f"🏥 *AFETIVAMENTE* · _{data_ext}_\n\n"
-        f"*HOJE*\n"
-        f"  Leads · *{total_dia}*\n"
+        f"*ONTEM*\n"
+        f"  Leads novos · *{total_dia}*\n"
         f"  Agendamentos · *{agend_dia}*\n"
-        f"  Cancelamentos · *{cancel_dia}*\n"
-        f"  Conversão · *{taxa_dia}%*\n\n"
+        f"  Cancelamentos · *{cancel_dia}*\n\n"
         f"*ESPECIALIDADES*\n"
         f"{linhas_serv}\n"
         f"*CONVERSÃO*\n"
@@ -239,13 +239,12 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  30 dias · *{taxa_mes}%* ({agend_mes}/{tot_mes})\n"
         f"  Perdidos · *{perdidos_mes}*\n\n"
         f"*AGUARDANDO RESPOSTA*\n"
-        f"  7 dias · *{sum(1 for c in conversas_semana if c.get('sem_resposta'))}* contatos\n"
-        f"  30 dias · *{sum(1 for c in conversas_mes if c.get('sem_resposta'))}* contatos\n\n"
-        f"*EQUIPE COMERCIAL*\n"
+        f"  7 dias · *{aguard_7}* contatos\n"
+        f"  30 dias · *{aguard_30}* contatos\n\n"
+        f"*EQUIPE*\n"
         f"{linhas_atend}"
-        f"  🤖 Amanda (IA) · *{amanda_dia}* conversas hoje\n"
-        f"{linha_abandono}\n"
-        f"_Setor Comercial — dia anterior_"
+        f"  🤖 Amanda (IA) · {amanda_dia} conversas\n"
+        f"\n_Setor Comercial — dia anterior_"
     )
 
 
