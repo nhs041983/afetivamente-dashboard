@@ -49,7 +49,26 @@ TAG_SERVICO = {
 }
 
 KW_AGENDOU     = ["agendad", "consulta marcada", "confirmad", "horário marcado", "agendamos"]
-KW_CANCELAMENTO = ["cancelou", "cancelar", "cancelamento", "desistiu", "não vai mais"]
+KW_CANCELAMENTO = [
+    # Direto
+    "cancelou", "cancelar", "cancelamento", "cancela", "cancelei", "cancelamos",
+    # Desistência
+    "desistiu", "desistir", "desisti", "não quero mais", "nao quero mais",
+    "não tenho interesse", "nao tenho interesse", "não vou mais", "nao vou mais",
+    "não preciso mais", "nao preciso mais", "não vou conseguir", "nao vou conseguir",
+    # Remarcação / abandono
+    "remarcar", "reagendar para outro", "deixa pra depois", "deixar pra depois",
+    "outra hora", "outro momento", "não vou poder", "nao vou poder",
+    # Financeiro
+    "não tenho dinheiro", "nao tenho dinheiro", "não posso pagar", "nao posso pagar",
+    "muito caro", "caro demais", "fora do meu orçamento",
+    # Mudança de plano
+    "vou em outro", "encontrei outro", "já marquei em outro", "ja marquei em outro",
+    "vou desmarcar", "desmarcar", "desmarcado",
+    # Gírias / informal
+    "não rola", "nao rola", "não vai rolar", "nao vai rolar",
+    "não deu", "nao deu", "não dá mais", "nao da mais",
+]
 
 # ─────────────────────────────────────────────
 # BUSCA E PROCESSAMENTO

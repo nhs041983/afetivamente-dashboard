@@ -47,9 +47,24 @@ KW_AGENDOU = [
     "boa tarde!! tudo bem","confirmado ✓",
 ]
 KW_CANCELAMENTO = [
-    "cancelar","cancelamento","cancelei","cancela","desistir","desistência",
-    "não quero mais","nao quero mais","encerrar","desmarcar","desmarcei",
-    "não vou mais","nao vou mais","não consigo ir","nao consigo ir",
+    # Direto
+    "cancelou","cancelar","cancelamento","cancela","cancelei","cancelamos",
+    # Desistência
+    "desistiu","desistir","desisti","não quero mais","nao quero mais",
+    "não tenho interesse","nao tenho interesse","não vou mais","nao vou mais",
+    "não preciso mais","nao preciso mais","não vou conseguir","nao vou conseguir",
+    # Remarcação / abandono
+    "remarcar","deixa pra depois","deixar pra depois","outra hora","outro momento",
+    "não vou poder","nao vou poder","desmarcar","desmarcado","desmarcei",
+    # Financeiro
+    "não tenho dinheiro","nao tenho dinheiro","não posso pagar","nao posso pagar",
+    "muito caro","caro demais","fora do meu orçamento",
+    # Mudança de plano
+    "vou em outro","encontrei outro","já marquei em outro","ja marquei em outro",
+    "vou desmarcar",
+    # Gírias / informal
+    "não rola","nao rola","não vai rolar","nao vai rolar",
+    "não deu","nao deu","não dá mais","nao da mais",
 ]
 KW_PERDIDO = [
     "muito caro","não tenho dinheiro","nao tenho dinheiro","sem condições","sem condicoes",
