@@ -153,6 +153,16 @@ def detectar_servicos(texto, tags):
 
 def detectar_agendamento(texto, tags):
     todas_tags = " ".join(tags).upper()
+    # Tags explícitas têm prioridade máxima
+    if "AGENDOU" in todas_tags:
+        return "agendou"
+    if "NÃO AGENDOU" in todas_tags or "NAO AGENDOU" in todas_tags:
+        return "nao_agendou"
+    if "EM NEGOCIAÇÃO" in todas_tags or "EM NEGOCIACAO" in todas_tags:
+        return "negociando"
+    if "CANCELAMENTO" in todas_tags or "CANCELOU" in todas_tags:
+        return "cancelamento"
+    # Fallback por texto
     if "EM ATENDIMENTO" in todas_tags or any(k in texto for k in KW_AGENDOU):
         return "agendou"
     if any(k in texto for k in KW_CANCELAMENTO):

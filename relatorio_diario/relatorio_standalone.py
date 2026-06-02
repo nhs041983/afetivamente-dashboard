@@ -68,9 +68,17 @@ def detectar_servico(tags):
 
 def detectar_agendamento(texto, tags):
     todas = " ".join(tags).upper()
-    if "EM ATENDIMENTO" in todas:
+    # Tags explícitas têm prioridade máxima
+    if "AGENDOU" in todas:
         return "agendou"
-    if any(k in texto for k in KW_AGENDOU):
+    if "NÃO AGENDOU" in todas or "NAO AGENDOU" in todas:
+        return "nao_agendou"
+    if "EM NEGOCIAÇÃO" in todas or "EM NEGOCIACAO" in todas:
+        return "negociando"
+    if "CANCELAMENTO" in todas or "CANCELOU" in todas:
+        return "cancelamento"
+    # Fallback por texto
+    if "EM ATENDIMENTO" in todas or any(k in texto for k in KW_AGENDOU):
         return "agendou"
     if any(k in texto for k in KW_CANCELAMENTO):
         return "cancelamento"
@@ -238,9 +246,9 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  7 dias · *{taxa_sem}%* ({agend_sem}/{tot_sem})\n"
         f"  30 dias · *{taxa_mes}%* ({agend_mes}/{tot_mes})\n"
         f"  Perdidos · *{perdidos_mes}*\n\n"
-        f"*AGUARDANDO RESPOSTA*\n"
-        f"  7 dias · *{aguard_7}* contatos\n"
-        f"  30 dias · *{aguard_30}* contatos\n\n"
+        f"*PIPELINE*\n"
+        f"  🔄 Em negociação · *{sum(1 for c in conversas_mes if c.get('agendamento') == 'negociando')}*\n"
+        f"  ⏳ Aguardando resposta · *{aguard_30}*\n\n"
         f"*EQUIPE*\n"
         f"{linhas_atend}"
         f"  🤖 Amanda (IA) · {amanda_dia}\n"
