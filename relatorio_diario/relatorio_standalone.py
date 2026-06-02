@@ -246,7 +246,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
     linhas_atend = ""
     for nome in COMERCIAL:
         conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
-        linhas_atend += f"  *{nome}* · {conv_dia}\n"
+        linhas_atend += f"  *{nome}* · {conv_dia} conversas\n"
 
     # Amanda (IA)
     amanda_dia = sum(1 for c in conversas_ontem if c.get("tag_amanda"))
@@ -272,7 +272,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"  ⏳ Aguardando resposta · *{aguard_30}*\n\n"
         f"*EQUIPE*\n"
         f"{linhas_atend}"
-        f"  🤖 Amanda (IA) · {amanda_dia}\n"
+        f"  🤖 Amanda (IA) · {amanda_dia} conversas\n"
         f"\n_Setor Comercial — dia anterior_"
     )
 
