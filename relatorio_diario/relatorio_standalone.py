@@ -113,8 +113,16 @@ def processar(chats, periodo_ini, periodo_fim=None):
 
         # Ignorar contatos que não são leads (currículo, serviço indisponível, parceiros)
         tags_upper = [t.upper().strip() for t in todas_tags]
-        NAO_LEADS = {"CURRÍCULOS", "CURRICULOS", "SERVIÇO NÃO DISPONÍVEL",
-                     "SERVICO NAO DISPONIVEL", "PROFISSIONAIS PARCEIROS"}
+        NAO_LEADS = {
+            "CURRÍCULOS", "CURRICULOS",
+            "SERVIÇO NÃO DISPONÍVEL", "SERVICO NAO DISPONIVEL",
+            "PROFISSIONAIS PARCEIROS",
+            "CASSI", "PREFEITURAS", "PREFEITURA",
+            "PAIS DE PACIENTE", "PAIS",
+            "FORNECEDOR",
+            "MED FAMÍLIA", "MED FAMILIA",
+            "PROFISSIONAIS",
+        }
         if any(t in NAO_LEADS for t in tags_upper):
             eh_novo = False  # não conta nas métricas de conversão
 
