@@ -267,8 +267,10 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         conv_dia = sum(1 for c in conversas_ontem if c["atendente"] == nome)
         linhas_atend += f"  *{nome}* · {conv_dia} conversas\n"
 
-    # Amanda (IA)
+    # Amanda (IA) — conversas onde ela participou (pode incluir as da equipe)
     amanda_dia = sum(1 for c in conversas_ontem if c.get("tag_amanda"))
+    # Total único de conversas do dia (sem duplicatas)
+    total_conv_dia = len(conversas_ontem)
 
     # Aguardando resposta
     aguard_7  = sum(1 for c in conversas_semana if c.get("sem_resposta"))
@@ -289,7 +291,7 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
         f"*PIPELINE*\n"
         f"  🔄 Em negociação · *{sum(1 for c in conversas_mes if c.get('agendamento') == 'negociando')}*\n"
         f"  ⏳ Aguardando resposta · *{aguard_30}*\n\n"
-        f"*EQUIPE*\n"
+        f"*EQUIPE* _(total: {total_conv_dia} conversas)_\n"
         f"{linhas_atend}"
         f"  🤖 Amanda (IA) · {amanda_dia} conversas\n"
         f"\n_Setor Comercial — dia anterior_"
