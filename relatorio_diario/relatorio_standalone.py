@@ -30,12 +30,20 @@ MEMBROS = {
 }
 
 TAG_SERVICO = {
-    "AVALIAÇÃO NEUROPSICOLÓGICA": "Avaliação Neuropsicológica",
-    "PSICOTERAPIA":               "Psicoterapia",
-    "PSIQUIATRIA":                "Psiquiatria",
-    "ACOLHIMENTO":                "Acolhimento",
-    "FONOAUDIÓLOGA":              "Fonoaudiologia",
+    # Novas tags padronizadas
+    "PSIQUIATRIA ADULTO":         "Psiquiatria Adulto",
+    "PSIQUIATRIA INFANTOJUVENIL": "Psiquiatria Infantojuvenil",
+    "PSICOLOGIA ADULTO":          "Psicologia Adulto",
+    "PSICOLOGIA INFANTOJUVENIL":  "Psicologia Infantojuvenil",
+    "AVALIAÇÃO NEURO":            "Avaliação Neuropsicológica",
     "FONOAUDIOLOGIA":             "Fonoaudiologia",
+    "TERAPIA OCUPACIONAL":        "Terapia Ocupacional",
+    # Tags antigas (compatibilidade)
+    "AVALIAÇÃO NEUROPSICOLÓGICA": "Avaliação Neuropsicológica",
+    "PSICOTERAPIA":               "Psicologia Adulto",
+    "PSIQUIATRIA":                "Psiquiatria Adulto",
+    "FONOAUDIÓLOGA":              "Fonoaudiologia",
+    "ACOLHIMENTO":                "Acolhimento",
     "NUTRICIONISTA":              "Nutrição",
     "MED FAMÍLIA":                "Medicina de Família",
 }
@@ -172,18 +180,23 @@ def montar_mensagem(conversas_ontem, conversas_semana, conversas_mes, ontem_fmt)
 
     # ── Especialidades do dia ──
     ESPECIALIDADES = [
-        ("Avaliação Neuropsicológica", "🧠", "Avaliação"),
-        ("Psiquiatria",                "💊", "Psiquiatria"),
-        ("Psicoterapia",               "🛋️", "Psicologia"),
+        ("Psiquiatria Adulto",          "🧠", "Psiq. Adulto"),
+        ("Psiquiatria Infantojuvenil",  "👶", "Psiq. Infantil"),
+        ("Psicologia Adulto",           "💬", "Psic. Adulto"),
+        ("Psicologia Infantojuvenil",   "💬", "Psic. Infantil"),
+        ("Avaliação Neuropsicológica",  "🔍", "Av. Neuro"),
+        ("Fonoaudiologia",              "🗣️", "Fono"),
+        ("Terapia Ocupacional",         "🤝", "T. Ocupacional"),
     ]
-    maior = max(len(label) for _, _, label in ESPECIALIDADES)
     linhas_serv = ""
     for chave, emoji, label in ESPECIALIDADES:
         total = sum(1 for c in novos_dia if c["servico"] == chave)
         agd   = sum(1 for c in novos_dia if c["servico"] == chave and c["agendamento"] == "agendou")
-        pontos  = "." * (maior - len(label) + 4)
-        agd_txt = f" ({agd}✅)" if agd > 0 else ""
-        linhas_serv += f"{emoji} {label} {pontos} *{total}* leads{agd_txt}\n"
+        if total > 0:
+            agd_txt = f" ({agd}✅)" if agd > 0 else ""
+            linhas_serv += f"  {emoji} {label} · *{total}*{agd_txt}\n"
+    if not linhas_serv:
+        linhas_serv = "  Sem leads identificados\n"
 
     # ── Especialidade com maior abandono (mês) ──
     abandono = {}
